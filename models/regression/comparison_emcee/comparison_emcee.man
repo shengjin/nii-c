@@ -1,0 +1,1 @@
+This is an implementation of the same regression model using emcee.
