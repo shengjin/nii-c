@@ -1,1 +1,1 @@
-Here is an implementation of a simple regression model.
+This is an implementation of a simple regression model.
