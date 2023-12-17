@@ -10,6 +10,7 @@
 
 int N_parm; // N parameters of a sampling model
 int N_iter; // N iterations of each chain
+int N_stoptune; // stop tuning after N_stoptune
 int N_beta; // N beta for N_beta parallel tempering chains
 double *Beta_Values;
 //
@@ -17,6 +18,7 @@ int n_iter_a_stack;      //
 int n_iter_a_batch_base; // 
 int n_iter_a_batch_rand; //
 int N_swap;              // 
+int Swapmode;            // 
 //
 int n_iter_in_tune;      // 
 //
@@ -143,6 +145,10 @@ void read_chains_grid(char *path)
     para_name = "N_iter";
     para_line = read_onepara(path, para_name);
     sscanf(para_line, "%[^:]:%d", dummy, &N_iter);
+    //
+    para_name = "N_stoptune";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &N_stoptune);
     //
     para_name = "N_beta";
     para_line = read_onepara(path, para_name);
@@ -339,6 +345,10 @@ void read_sampling_para(char *path)
     para_name = "N_swap";
     para_line = read_onepara(path, para_name);
     sscanf(para_line, "%[^:]:%d", dummy, &N_swap);
+    //
+    para_name = "Swapmode";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &Swapmode);
     //
     free(para_line);
     para_line = NULL;

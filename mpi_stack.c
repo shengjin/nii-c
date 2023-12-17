@@ -9,6 +9,7 @@
 
 extern int N_parm;
 extern int N_swap;
+extern int Swapmode;
 extern char *results_dir;
 
 int max(int a, int b);
@@ -35,7 +36,7 @@ double log_prior(double *ptr_one_chain);
 int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks);
 
 // judge if a swapping is needed and do it if so
-int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double *logpost_all_ranks, int i_swap);
+int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks);
 
 // swap the values of two chain
 void swap_two_chains(double *ptr_ichain, double *ptr_jchain, int N_parm);
@@ -43,7 +44,7 @@ void swap_two_chains(double *ptr_ichain, double *ptr_jchain, int N_parm);
 
 int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
 {    
-    int save_debug = 1;
+    int save_debug = 0;
     //
     int i_tmp = 0; 
     int i_next = 0; 
@@ -57,6 +58,7 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
     //
     //
     int i_swap = 0; // lower i_rank of pair of ranks in mpi_swapping 
+    int j_swap = 0; // lower i_rank of pair of ranks in mpi_swapping 
     // 
     while ( i_next < n_iter_a_stack )
     {
@@ -116,6 +118,7 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
         //
         for (int i=0; i<N_swap; i++)
         {
+            // let the root find i_swap
             if (my_rank == root_rank)
             {
                 i_swap = i4_unif_0a(n_ranks-1);
@@ -131,7 +134,7 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
             }
             //
             // Judge and make swap in case needed
-            mpi_judge_and_swap(status, my_rank, root_rank, slave_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, nline_data, data_NlineNdim, logpost_all_ranks, i_swap);
+            mpi_judge_and_swap(status, my_rank, root_rank, slave_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, nline_data, data_NlineNdim, logpost_all_ranks, i_swap, j_swap, Swapmode, n_ranks);
         }
         //
         //
@@ -149,20 +152,31 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
 
 
 
-int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double *logpost_all_ranks, int i_swap)
+int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks)
 {    
     if( my_rank == root_rank )
     {
         // Work for root_rank
         //
         // save infos of swapping
-        int debug_save_swap = 1;
+        int debug_save_swap = 0;
         //
         int do_swap = 0; // default not jump
         double H;
         double rand_unif;
         //
-        int j_swap = i_swap +1;
+        if (Swapmode == 0)
+        {
+            j_swap = i_swap +1;
+        }
+        if (Swapmode == 1)
+        {
+            j_swap = i4_unif_0a(n_ranks-1);
+            if (j_swap >= i_swap)
+            {
+                   j_swap = j_swap + 1;
+            }
+        }
         //
         // redundant ptr to make code clear
         double *ptr_ichain;

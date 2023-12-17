@@ -9,6 +9,7 @@
 extern char *results_dir;
 
 extern int N_parm;
+extern int N_stoptune;
 
 
 // save n_iter_a_stack, ar, rank_id, 
@@ -37,7 +38,7 @@ int save_sigma_gauss_prop(double *ptr_sigma_prop, int i_rank);
 // NOTE: ptr_i_accumul, ptr_i_accumul_accept are separately updated in each rank (they have the same ptr_i_accumul, but different ptr_i_accumul_accept
 int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root)
 {    
-    int save_debug = 1;
+    int save_debug = 0;
     int processing_debug = 1;
     //
     unsigned n_accept_old = 0;
@@ -95,7 +96,7 @@ int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, 
         //
         MPI_Barrier(MPI_COMM_WORLD);
         //
-        if (i_next_stack < N_iter)
+        if ( (i_next_stack < N_stoptune) && (i_next_stack < N_iter) )
         {
             //
             mpi_find_ranks2tune(status, my_rank, n_ranks, root_rank, slavereturn_tag, ar_ok_lower, ar_ok_upper, accept_rate_a_stack, tune_ranks); 
@@ -117,7 +118,9 @@ int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, 
                         printf("        tuning rank %d...\n", i_rank);
                     }
                     //
+                    //printf("before mpi_tune_sigma_irank\n");
                     mpi_tune_sigma_irank(status, my_rank, n_ranks, root_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, logpost_all_ranks, nline_data, data_NlineNdim, ptr_sigma_prop, n_iter_in_tune, i_rank, sigma_RanksParm_root);
+                    //printf("after mpi_tune_sigma_irank\n");
                 }
                 MPI_Barrier(MPI_COMM_WORLD);
             // end of tune LOOP A ( all n_rank needed to be tuned)
@@ -347,7 +350,7 @@ int save_sigma_gauss_prop(double *ptr_sigma_prop, int i_rank)
     //
     for (int i = 0; i < N_parm; i++)
     {
-        fprintf(out, "%lf", *(ptr_sigma_prop+i));
+        fprintf(out, "%.12e", *(ptr_sigma_prop+i));
         fprintf(out, "   ");
     }
     fprintf(out, "\n");

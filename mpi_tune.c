@@ -116,7 +116,7 @@ int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_r
 // LOOP A is a wrapper of this function (i.e., for all ranks needed to be tune 
     //
     // save debugging 
-    int save_tuning_debug = 1;
+    int save_tuning_debug = 0;
     //
     //////////////////////////////////////////////////////
     // Every slave have these two varibles
@@ -354,7 +354,7 @@ double iter_batch_mh_tune(double **chain_IterParm, double *ptr_sigma_prop, int n
 {
     double ar;
     //
-    int save_debug = 1;
+    int save_debug = 0;
 
     //save_sigma_gauss_prop(ptr_sigma_prop, my_rank);
  
@@ -379,7 +379,7 @@ double iter_batch_mh_tune(double **chain_IterParm, double *ptr_sigma_prop, int n
     ptr_one_chain_new = alloc_1d_double(N_parm);
     //
     //debug int used to turn on int save_log_posterior
-    int save_allch_ll = 1; 
+    int save_allch_ll = 0; 
     //
     // set the initial first logpost 
     *(logpost+0) = logpost_old;
