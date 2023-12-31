@@ -1,0 +1,141 @@
+
+\section{Code structure} 
+
+The structure of the Nii-C code has been designed to facilitate its utilization in a wide range of applications.
+Nii-C separates the source files dependent on a user's model, which correspond to the prior and likelihood functions of the model, from the bulk program subroutines that are linked to the adaptive parallel tempering MCMC.
+This section presents the primary subroutine files of Nii-C and their important functions  in two sub-sections.
+
+\subsection{subroutines of Nii-C} 
+
+The subroutine files of Nii-C are designed and developed for different uses. Each of them is described separately in the list below.
+
+\begin{itemize}
+   \item  $main.c$ $-$ This file contains the main function of the program.  It is responsible for configuring and executing the entire APT-MCMC process.
+   
+   \item $mpi\_init.c$ $-$ It initializes the random values of all model parameters in each  parallel tempering Markov chain.
+   
+   \item  $mpi\_flow.c$ $-$ This file is responsible for scheduling tasks throughout the entire APT-MCMC process. It divides all the parallel tempering Markov chains into a series of successive segments, which are referred as stacks in the code, and moniters the acceptance rates obtained at the end of each stack. 
+   If the acceptance rate of any stack is not within a reasonable range, an additional tuning stage will be scheduled for the corresponding chain.  
+   
+  \item  $mpi\_stack.c$ $-$ It performs the random walk of each segment chain within a stack.
+  It further divides the segment chains in a stack into successive batches, which are even short chains, and accesses the swapping criteria between randomly selected parallel tempering chains after each batch. 
+  If the criteria for swapping between the chosen parallel chains are met, the current parameter values of the chains will be swapped.  
+  
+  \item  $mpi\_batch.c$ $-$ It contains the functions that implement the Metropolis-Hastings MCMC algorithm for each batch. 
+  
+   \item  $mpi\_tune.c$ $-$ This file includes all the functions related to the tuning process, which aims to automatically adjust the sampling step sizes of all parallel tempering chains with bad acceptance rates using a automatic control system.
+   
+  \item $data\_loader.c$ $-$ This file contains the functions for loading the user data files.
+  
+  \item  $readin.c$ $-$ It contains functions for reading the input parameters of Nii-C. These parameters control the overall APT-MCMC process.
+  
+  
+  \item $user\_prior.c$ $-$ This is a user-defined file that includes the prior functions of a specific model.
+  
+  \item  $user\_logll.c$  $-$ This is another user-defined file for the likelihood functions of a specific model.
+\end{itemize}
+
+\subsection{key functions} 
+
+The subsequent list describes important functions in Nii-C to assist the modification of the code if needed.
+
+\begin{itemize}
+
+\item $calc\_closest\_ar$ $-$ In a tuning stage, this function identifies the acceptance rate that is closest to the ideal value of 0.234 in the two-dimensional array named ``$ar\_ParmNvaried$". The array records the acceptance rates of ``$N_{para}$" tuning groups comprising ``$Nvaried$" tuning chains for each model parameter.
+
+\item $calc\_closest\_ar\_oneparm$ $-$ This function finds the acceptance rate closest to the ideal value of 0.234 for a single model parameter. It checks a slice in the two-dimensional array ``$ar\_ParmNvaried$" that contains the acceptance rates of the tuning group for the model parameter.
+
+\item $calc\_sigma\_scale\_boundary$ $-$ This function calculates the upper and lower bounds of the standard deviation of the Gaussian proposal distribution (sampling step size) for each model parameter. These bounds, named as ``$sigma\_parm\_min$" and ``$sigma\_parm\_max$", are necessary for adjusting the sampling step sizes of all parameters during a tuning phase.
+
+\item $calc\_SD\_allParm$ $-$ 
+It calculates the standard deviation of the ``$Nvaried$" errors between the ideal acceptance rate and the acceptance rates of all tuning chains  for each model parameter.
+
+\item $check\_bounceInside\_sigma\_boundary$ $-$ In a tuning stage, this function assesses whether the newly generated sampling step sizes are within the permissible range of values. If not, it adjusts the value to shift it within the permitted range.
+
+\item $do\_gaussian\_propose$ $-$  This function uses the Gaussian proposal distribution to produce a new parameter set via the Metropolis-Hastings algorithm.
+
+\item $decide\_sigma\_to\_change$ $-$ During the tuning stage, this function creates a new set of sampling step sizes by implementing Algorithm \ref{alg:one}.
+
+\item $gen\_sigma\_alltune$ $-$ In the tuning stage, this function creates a two-dimensional array called ``$sigma\_alltune\_ParmNvaried$" which contains a range of sampling step sizes adjusted for each model parameter. 
+
+\item $init\_gaussian\_proposal$ $-$ The function generates the initial standard deviation of the Gaussian proposal distribution for each model parameter. 
+
+\item $init\_parm\_set$ $-$ This function generates the random initial values for each model parameter.
+
+\item $iter\_batch\_mh$ $-$  This function inplements the Metropolis-Hastings MCMC for a short sequence of iterations in a batch.
+
+\item $iter\_batch\_mh\_tune$ $-$ It is the  ``$iter\_batch\_mh$" used in the tuning stages.
+
+\item $log\_prior$ $-$ This function calculates the logarithmic prior for a set of model parameters.
+
+\item $logll\_beta$ $-$  The function calculates the tempered logarithmic likelihood of a chain based on its particular $\beta$ value.
+
+\item $mpi\_data\_loader$ $-$ This function acts as a wrapper for loading the user's data file. 
+
+\item $mpi\_distribute\_sigma\_prop\_root$ $-$ In an MPI group, the communicator distributes the corresponding sampling step sizes for each model parameter to the other parallel tempering processes in the group.
+ 
+\item $mpi\_entire\_flow$ $-$  This function serves as a wrapper for the entire APT-MCMC sampling process.
+
+\item $mpi\_find\_ranks2tune$ $-$ The function examines the acceptance rates of all parallel tempering chains and identifies those with bad acceptance rates.
+
+\item $mpi\_gather\_sigma\_prop\_root$ $-$ The communicator in an MPI group gathers the current  sampling step sizes for each of the model parameter that are used in each of the parallel tempering chains.
+
+\item $mpi\_gen\_init\_parm$ $-$ This function generates random initial values for all of the parallel tempering chains' model parameters.
+
+\item $mpi\_get\_nlines$ $-$ The function reads the line number of an input file for each parallel process.
+
+\item $mpi\_init\_calc\_logllpp$ $-$ The function computes and gathers the tempered logarithmic likelihood of each parallel chain at the start of an APT-MCMC process, but only for the first iteration.
+
+\item $mpi\_judge\_and\_swap$ $-$ This function 
+uses Equation \ref{eqn:pltemp} to check whether the positions of two parallel chains in the parameter space need to be swapped. If this is the case, it will swap their positions.  
+
+\item $mpi\_run\_a\_batch$ $-$ This function will schedule all parallel tempering chains to run the Metropolis-Hastings MCMC algorithm for a short iteration segment in a batch. 
+
+\item $mpi\_static\_sigma\_stack$ $-$ The function employs constant sampling step sizes to execute parallel tempering MCMC for segment chains in a stack. 
+
+\item $mpi\_tune\_sigma\_iparmNrank$ $-$  This function creates a group of tuning chains for a model parameter and computes the acceptance rates of these tuning chains. 
+
+\item $mpi\_tune\_sigma\_irank$ $-$  For a parallel tempering chain that requires tuning, this function  generates new groups of tuning chains for each model parameter in turn and then collects the acceptance rates resulting from all the tuning chains.  
+
+\item $modify\_sigma\_prop\_rankintune$ $-$ This function adjusts the sampling step sizes of a tuning chain using Algorithm \ref{alg:one}.
+
+\item $para\_boundary$ $-$  It verifies whether the value of each parameter falls within the allowable range. If not, it modifies the value to bring it within the permitted range.
+
+\item $race\_all\_parm$ $-$ This function aggressively adjusts the step sizes of all parameters. It selects the new step size for each parameter from $N_{varied}$ tuning values. The chosen value being the one that yields an acceptance rate closest to the ideal rate of 0.234. 
+
+\item $read\_input\_ini$ $-$  It is a wrapper function that reads all the input parameters defined in the ``$input.ini$" file.
+
+
+\item $replicate\_OneSigmaOrigin\_Nvaried$ $-$  This function copies the current sampling step sizes of a tuning chain from a two-dimensional array called ``$sigma\_RanksParm\_root$" which is stored in the MPI communicator. Afterwards, it generates multiple  copies of this set of sampling step sizes for ``$Nvaried$" tuning chains.
+
+\item $save\_ar\_stack$ $-$ If the debug option is enabled, this function outputs the acceptance rates in a stack for each parallel tempering chain in the results directory. These acceptance rates are saved with a filename of ``$accept\_rate\_stacks.chain$ + $an~ integer~ representing~ its~ $ MPI\_Comm\_rank".  
+
+\item $save\_debug\_gaussian\_proposal$ $-$  During debugging, it saves all the sampling step sizes in the results directory with a filename of ``$debug\_gaussian\_prop$".
+
+\item $save\_debug\_para\_boundary$ $-$ When in debug mode, it saves all the proposed values of a parameter in its random walk with a filename of ``$the ~paramter ~name$ + $.debug\_para\_boundary$" to verify that they are within the permitted range. 
+
+\item $save\_debug\_stack\_doswap$ $-$ In debug mode, this function records all swapping decisions as ``$swap\_decision.dat$" in the results directory.
+
+\item $save\_debug\_stack\_sequence$ $-$ In debug mode, this function outputs the sequence numbers in a stack whenever swapping decisions are made.
+
+\item $save\_init\_parm$ $-$ In debug mode, it saves the random initial model parameters of all the parallel tempering chains as ``$init.parm$" in the results directory.
+
+\item $save\_log\_posterior$ $-$ If a save option is turned on, this function outputs the model parameters, their corresponding logarithmic prior,  tempered likelihood, and posterior of all proposed sampling points in the results directory. The files created will have names that end in ``$.all.ll$".
+
+\item $save\_sigma\_gauss\_prop$ $-$ This function outputs the sampling step sizes of all model parameters of each parallel tempering chain in the results directory  with a filename of ``$gaussian\_prop.chain$ + $an~ integer~ representing~ its~ $ MPI\_Comm\_rank".
+
+\item $save\_the\_batch$ $-$  This function returns the main output of the Nii-C code. It stores the model parameters, the calculated logarithmic posterior, the index numbers in the entire Markov chain, and the cumulative number of accepted sampling proposals at each iteration for each parallel tempering chain with a filename of ``$Chain$ + $an~ integer~ representing~ its~ $ MPI\_Comm\_rank + $.dat$".
+
+\item $save\_the\_batch\_tune$ $-$ In tuning stages,  this function records all sampled model parameters and their resulting logarithmic posteriors if a debug option is turned on. These output filenames begin with ``$tune.$".
+
+\item $save\_the\_seed$ $-$ In debug mode, it saves the initial random seeds used by each parallel tempering chain in the results directory as ``$init.randseed$".
+
+\item $save\_tuning\_sigma\_ar$ $-$ If a save option is enabled, this function will store the new sampling step sizes and their corresponding acceptance rates of all tuning chains in the results directory, with names starting with ``$sigma\_ar\_intune.$".
+
+\item $swap\_two\_chains$ $-$ This function interchanges the positions in the parameter space of two parallel tempering chains.
+
+\item $tune\_oneparm\_Nvaried$ $-$  In a tuning process, this function updates the ``$sigma\_tune1parm\_NvariedParm$" array. The array consists of ``$Nvaried$" sets of new sampling step sizes for a group of tuning chains that are used to adjust the step size of a model parameter. The new values for the sampling step sizes of the group of tuning chains are provided in an array named ``$sigma\_alltune\_ParmNvaried$". 
+
+\end{itemize} 
+
+
