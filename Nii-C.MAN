@@ -1,43 +1,7 @@
 
-\section{Code structure} 
+Key Functions in Nii-C 
 
-The structure of the Nii-C code has been designed to facilitate its utilization in a wide range of applications.
-Nii-C separates the source files dependent on a user's model, which correspond to the prior and likelihood functions of the model, from the bulk program subroutines that are linked to the adaptive parallel tempering MCMC.
-This section presents the primary subroutine files of Nii-C and their important functions  in two sub-sections.
-
-\subsection{subroutines of Nii-C} 
-
-The subroutine files of Nii-C are designed and developed for different uses. Each of them is described separately in the list below.
-
-\begin{itemize}
-   \item  $main.c$ $-$ This file contains the main function of the program.  It is responsible for configuring and executing the entire APT-MCMC process.
-   
-   \item $mpi\_init.c$ $-$ It initializes the random values of all model parameters in each  parallel tempering Markov chain.
-   
-   \item  $mpi\_flow.c$ $-$ This file is responsible for scheduling tasks throughout the entire APT-MCMC process. It divides all the parallel tempering Markov chains into a series of successive segments, which are referred as stacks in the code, and moniters the acceptance rates obtained at the end of each stack. 
-   If the acceptance rate of any stack is not within a reasonable range, an additional tuning stage will be scheduled for the corresponding chain.  
-   
-  \item  $mpi\_stack.c$ $-$ It performs the random walk of each segment chain within a stack.
-  It further divides the segment chains in a stack into successive batches, which are even short chains, and accesses the swapping criteria between randomly selected parallel tempering chains after each batch. 
-  If the criteria for swapping between the chosen parallel chains are met, the current parameter values of the chains will be swapped.  
-  
-  \item  $mpi\_batch.c$ $-$ It contains the functions that implement the Metropolis-Hastings MCMC algorithm for each batch. 
-  
-   \item  $mpi\_tune.c$ $-$ This file includes all the functions related to the tuning process, which aims to automatically adjust the sampling step sizes of all parallel tempering chains with bad acceptance rates using a automatic control system.
-   
-  \item $data\_loader.c$ $-$ This file contains the functions for loading the user data files.
-  
-  \item  $readin.c$ $-$ It contains functions for reading the input parameters of Nii-C. These parameters control the overall APT-MCMC process.
-  
-  
-  \item $user\_prior.c$ $-$ This is a user-defined file that includes the prior functions of a specific model.
-  
-  \item  $user\_logll.c$  $-$ This is another user-defined file for the likelihood functions of a specific model.
-\end{itemize}
-
-\subsection{key functions} 
-
-The subsequent list describes important functions in Nii-C to assist the modification of the code if needed.
+The following list describes important functions in Nii-C to assist the modification of the code if needed.
 
 \begin{itemize}
 
