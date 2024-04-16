@@ -18,7 +18,7 @@ int save_the_seed(unsigned seed, char *path, int i_rank);
 int save_init_parm(double **transit_BetaParm, char *path, int n_ranks, int N_parm);
 
 // init logpost(posterior)
-double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
 // init log_pirior
 double log_prior(double *ptr_one_chain);
 
@@ -116,7 +116,7 @@ int mpi_gen_init_parm(MPI_Status status, int my_rank, int n_ranks, int root_rank
 
 
 
-int mpi_init_calc_logllpp(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double N_parm, double *logpost_all_ranks)
+int mpi_init_calc_logllpp(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double N_parm, double *logpost_all_ranks)
 {
     int debug_arr_pointer = 0;
     //

@@ -18,7 +18,7 @@ extern char *results_dir; //dir to save outputs
 
 
 // ...iter the batch, main work done here
-double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double **data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old);
+double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double *data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old);
 //
 // ...save the batch: save the chain sellected
 int save_the_batch(double **chain_IterParm, int n_iter_a_batch, char *path, int i_rank, double *logpost, int *accumul, int *accumul_accept);
@@ -39,13 +39,13 @@ double r8_normal_01();
 
 
 // log likelyhood
-double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
 // log prior
 double log_prior(double *ptr_one_chain);
 
 
 
-int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
+int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
 {    
     //
     if( my_rank == root_rank )
@@ -135,7 +135,7 @@ int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, 
 
 
 
-double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double **data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old)
+double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double *data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old)
 {
     //
     int *accumul_accept;

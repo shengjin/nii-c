@@ -43,19 +43,19 @@ int save_sigma_gauss_prop(double *ptr_sigma_prop, int i_rank);
 // get the line numbers of a file
 int mpi_get_nlines(int line_number, int my_rank, char *path, int root_rank);
 // to load user data file 
-void mpi_data_loader(int my_rank, int root_rank, int nline_data, int ndim_data, double **data_NlineNdim, char *datafile, char *delimiter);
+void mpi_data_loader(int my_rank, int root_rank, int nline_data, int ndim_data, double *data_NlineNdim, char *datafile, char *delimiter);
 
 // init a BetaParm arry ...
 int mpi_gen_init_parm(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, int N_parm, unsigned *ptr_rolling_seed, double **transit_BetaParm_root);
 // calc the init logpost
-int mpi_init_calc_logllpp(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double N_parm, double *logpost_all_ranks);
+int mpi_init_calc_logllpp(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double N_parm, double *logpost_all_ranks);
 // collect sigma_prop at root
 int mpi_gather_sigma_prop_root(MPI_Status status, int my_rank, int n_ranks, int root_rank, int slavereturn_tag, double **sigma_RanksParm_root, double *ptr_sigma_prop);
 
 
 
 // declaration of the mpi flow function
-int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root);
+int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root);
 
 
 
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
     nline_data = mpi_get_nlines(nline_data, my_rank, Data_file, root_rank);
     //
     // alloc the memory to store user data 
-    double ** data_NlineNdim;  
-    data_NlineNdim = alloc_2d_double(nline_data, ndim_data);
+    double * data_NlineNdim;  
+    data_NlineNdim = alloc_1d_double(nline_data*ndim_data);
     // read the data using root=0 and then broadcast to other ranks.
     mpi_data_loader(my_rank, root_rank, nline_data, ndim_data, data_NlineNdim, Data_file, Delimiter);
 
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
         sigma_RanksParm_root = NULL;
     }
     //
-    free_2d_double(data_NlineNdim);  
+    free_1d_double(data_NlineNdim);  
     data_NlineNdim = NULL;  
     //
     free_1d_double(sigma_gaussian_prop);  

@@ -28,21 +28,21 @@ int save_debug_stack_sequence(unsigned *ptr_i_accumul, int i_swap);
 int save_debug_stack_doswap(int do_swap);
 
 // init logpost(posterior)
-double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
 // init log_pirior
 double log_prior(double *ptr_one_chain);
 
 // declaration of the mpi_batch function
-int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks);
+int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks);
 
 // judge if a swapping is needed and do it if so
-int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks);
+int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks);
 
 // swap the values of two chain
 void swap_two_chains(double *ptr_ichain, double *ptr_jchain, int N_parm);
 
 
-int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
+int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
 {    
     int save_debug = 0;
     //
@@ -152,7 +152,7 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
 
 
 
-int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double **data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks)
+int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks)
 {    
     if( my_rank == root_rank )
     {

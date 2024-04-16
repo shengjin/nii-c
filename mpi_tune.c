@@ -31,7 +31,7 @@ extern char *FoutSuf; //suffix of output chains_files
 extern char *results_dir; //dir to save outputs
 
 // log likelyhood
-double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
 // log prior
 double log_prior(double *ptr_one_chain);
 
@@ -58,7 +58,7 @@ int init_gaussian_proposal(double *ptr_sigma_prop, double init_gp_ratio);
 
 
 // loop A
-int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, double *logpost_all_ranks, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, int rank_in_tune, double **sigma_RanksParm_root);
+int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, double *logpost_all_ranks, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, int rank_in_tune, double **sigma_RanksParm_root);
 // save checking info
 int save_tuning_sigma_ar(double **ar_ParmNvaried, double **sigma_alltune_ParmNvaried, char *path, int rank_in_tune, int n_ranks);
 
@@ -83,11 +83,11 @@ int save_sigma_gauss_prop(double *ptr_sigma_prop, int i_rank);
 
 
 // loop B
-int mpi_tune_sigma_iparmNrank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int slavereturn_tag, double *chain_single_tune, double logpost_single_tune, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, double **ar_ParmNvaried, int rank_in_tune, int j_parm);
+int mpi_tune_sigma_iparmNrank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int slavereturn_tag, double *chain_single_tune, double logpost_single_tune, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, double **ar_ParmNvaried, int rank_in_tune, int j_parm);
 
 // NOTE: in iter_batch_mh, diff rank use diff Beta that are decided by int i_rank
 // NOTE: here in iter_batch_mh_tune, diff rank should use the same Beta that are decided by rank_in_tune
-double iter_batch_mh_tune(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_in_tune, int nline_data, double **data_NlineNdim, int rank_in_tune, unsigned *ptr_accumul_accept_tune, double logpost_old, int my_rank);
+double iter_batch_mh_tune(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_in_tune, int nline_data, double *data_NlineNdim, int rank_in_tune, unsigned *ptr_accumul_accept_tune, double logpost_old, int my_rank);
 
 // ...save the batch_in tune: save the tune chain
 int save_the_batch_tune(double **chain_IterParm, int n_iter_a_batch, char *path, int my_rank, int rank_in_tune, double *logpost);
@@ -111,7 +111,7 @@ double r8_normal_01();
 
 
 // tune 1 rank only
-int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, double *logpost_all_ranks, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, int rank_in_tune, double **sigma_RanksParm_root)
+int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, double *logpost_all_ranks, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, int rank_in_tune, double **sigma_RanksParm_root)
 {
 // LOOP A is a wrapper of this function (i.e., for all ranks needed to be tune 
     //
@@ -266,7 +266,7 @@ int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_r
 
 
 // loop B
-int mpi_tune_sigma_iparmNrank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int slavereturn_tag, double *chain_single_tune, double logpost_single_tune, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, double **ar_ParmNvaried, int rank_in_tune, int j_parm)
+int mpi_tune_sigma_iparmNrank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int slavereturn_tag, double *chain_single_tune, double logpost_single_tune, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, double **ar_ParmNvaried, int rank_in_tune, int j_parm)
 {    
     //
     if( my_rank == root_rank )
@@ -350,7 +350,7 @@ int mpi_tune_sigma_iparmNrank(MPI_Status status, int my_rank, int n_ranks, int r
 
 
 // Here we use rank_in_tune rather than i_rank because in tuning process, all ranks using the same Beta Value 
-double iter_batch_mh_tune(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_in_tune, int nline_data, double **data_NlineNdim, int rank_in_tune, unsigned *ptr_accumul_accept_tune, double logpost_old, int my_rank)
+double iter_batch_mh_tune(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_in_tune, int nline_data, double *data_NlineNdim, int rank_in_tune, unsigned *ptr_accumul_accept_tune, double logpost_old, int my_rank)
 {
     double ar;
     //

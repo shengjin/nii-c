@@ -16,11 +16,11 @@ extern int N_stoptune;
 int save_ar_stack(int i_next_stack, int n_iter_a_stack, double accept_rate_a_stack, int my_rank);
 
 // run a CONSTANT gaussian proposal sigma stack of many batches
-int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks);
+int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks);
 
 // working 
 // loop A
-int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, double *logpost_all_ranks, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, int rank_in_tune, double **sigma_RanksParm_root);
+int mpi_tune_sigma_irank(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, double *logpost_all_ranks, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, int n_iter_in_tune, int rank_in_tune, double **sigma_RanksParm_root);
 
 
 // collect sigma_prop at root
@@ -36,7 +36,7 @@ int save_sigma_gauss_prop(double *ptr_sigma_prop, int i_rank);
 
 
 // NOTE: ptr_i_accumul, ptr_i_accumul_accept are separately updated in each rank (they have the same ptr_i_accumul, but different ptr_i_accumul_accept
-int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double **data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root)
+int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root)
 {    
     int save_debug = 0;
     int processing_debug = 1;

@@ -4,12 +4,14 @@
 
 extern double *Beta_Values;
 
+extern int ndim_data; 
+
 //////////////////////////////
 // NOTE: change logll_beta in mpi_batch/init if func_prototype is changed.
-double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
 
 // N_parm not explicitly declare here because we will use each of parms invery detail, thus for sure we know the number.
-double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim, int i_rank)
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank)
 {
    /* model description:
     * 
@@ -36,7 +38,7 @@ double logll_beta(double *ptr_one_chain, int nline_data, double **data_NlineNdim
     for (int i=0; i<nline_data; i++)
     {
         sig_power = pow(d, 2.0);
-        logll_one = -0.5*log(2*PI) -0.5*log(sig_power) - pow((data_NlineNdim[i][0]*a+b-data_NlineNdim[i][1]), 2.0)/2.0/sig_power;
+        logll_one = -0.5*log(2*PI) -0.5*log(sig_power) - pow((data_NlineNdim[i*ndim_data+0]*a+b-data_NlineNdim[i*ndim_data+1]), 2.0)/2.0/sig_power;
         logll = logll + logll_one;
     }
     //

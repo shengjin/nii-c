@@ -4,27 +4,35 @@
 #include <string.h>
 #include "mpi.h"
 
+
+struct user_data 
+{
+    int N_dim; // dimension of data (e.g., N columns)
+    int capacity;
+};
+
 int get_nlines_of_file(char *path);
 
-int read_2d_data(char *path, double **data_NlineNdim, int nline_data, int ndim_data, char *delimiter);
+int read_data(char *path, double *data_NlineNdim, int nline_data, int ndim_data, char *delimiter);
 
 // load data 
-void mpi_data_loader(int my_rank, int root_rank, int nline_data, int ndim_data, double **data_NlineNdim, char *path, char *delimiter)
+void mpi_data_loader(int my_rank, int root_rank, int nline_data, int ndim_data, double *data_NlineNdim, char *path, char *delimiter)
 {
     //
     if( my_rank == root_rank )
     {
         // read data
-        read_2d_data(path, data_NlineNdim, nline_data, ndim_data, delimiter);
+        read_data(path, data_NlineNdim, nline_data, ndim_data, delimiter);
     } 
     // 
     // MPI_Bcast the user_data
-    MPI_Bcast(&data_NlineNdim[0][0], nline_data*ndim_data, MPI_DOUBLE, root_rank, MPI_COMM_WORLD);
+    // /// todo to do todo
+    MPI_Bcast(&data_NlineNdim[0], nline_data*ndim_data, MPI_DOUBLE, root_rank, MPI_COMM_WORLD);
 }
 
 
 
-int read_2d_data(char *path, double **data_NlineNdim, int nline_data, int ndim_data, char *delimiter)
+int read_data(char *path, double *data_NlineNdim, int nline_data, int ndim_data, char *delimiter)
 {
     FILE *fp = fopen(path, "r");
     //
@@ -44,12 +52,13 @@ int read_2d_data(char *path, double **data_NlineNdim, int nline_data, int ndim_d
     {
         char *token = strtok(line, delimiter);
         // read the first element
-        data_NlineNdim[iline_local][0] = atof(token);
+        // /// todo to do todo
+        data_NlineNdim[iline_local*ndim_data+0] = atof(token);
         // read the other elements
         for(int j=1; j<ndim_data; j++)
         {
             token = strtok(NULL, delimiter);
-            data_NlineNdim[iline_local][j] = atof(token);
+            data_NlineNdim[iline_local*ndim_data+j] = atof(token);
         }
         iline_local++;
     }
