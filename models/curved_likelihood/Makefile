@@ -4,7 +4,6 @@ CC=mpicc
 
 
 CFLAGS = -Wall #-Werror 
-#CFLAGS = -Wall -Werror 
 CFLAGS += -Wextra
 CFLAGS += -O2 	#-O3
 
