@@ -2,7 +2,7 @@
 /* NOTE: the "para_name" str should no appear in comments */
 
 # setting the chain grid
-N_iter:                 1000000
+N_iter:                 300000
 # NOTE: N-beta == n-ranks since we set n-ranks based on N-beta, should at least be 2
 N_beta:	                4
 Beta_Values:            0.001, 0.01, 0.1, 1
@@ -14,7 +14,7 @@ N_stopTuneLadder:       100000
 # Four ladder tuning parameters
 # triggers to decide ladder tuning
 trigger_tune_devi:      0.05
-trigger_tune_sum:       0.3
+trigger_tune_sum:       3.0
 # scale parameters of ladder tuning
 scale_tune_ladder:      0.1
 double_zero_scale:      0.5

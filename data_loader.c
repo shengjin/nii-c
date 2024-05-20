@@ -5,12 +5,6 @@
 #include "mpi.h"
 
 
-struct user_data 
-{
-    int N_dim; // dimension of data (e.g., N columns)
-    int capacity;
-};
-
 int get_nlines_of_file(char *path);
 
 int read_data(char *path, double *data_NlineNdim, int nline_data, int ndim_data, char *delimiter);
@@ -26,7 +20,6 @@ void mpi_data_loader(int my_rank, int root_rank, int nline_data, int ndim_data, 
     } 
     // 
     // MPI_Bcast the user_data
-    // /// todo to do todo
     MPI_Bcast(&data_NlineNdim[0], nline_data*ndim_data, MPI_DOUBLE, root_rank, MPI_COMM_WORLD);
 }
 

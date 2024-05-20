@@ -10,7 +10,17 @@
 
 int N_parm; // N parameters of a sampling model
 int N_iter; // N iterations of each chain
+            //
 int N_stoptune; // stop tuning after N_stoptune
+int N_begintune; // stop tuning after N_stoptune
+                 //
+int Tune_Ladder; // tune the ladder (1, before N_begintune) or not (0).
+int N_stopTuneLadder; // tune the ladder (1, before N_begintune) or not (0).
+double trigger_tune_devi; //trigger 1 of ladder tuning: devi of mean (swap acceptance rates)
+double trigger_tune_sum; //trigger 2 of ladder tuning: sum of two neighbouring swap acceptance rates
+double scale_tune_ladder; // a scale ratio in the simple ladder tuning algorithm.
+double double_zero_scale; // scale the T in case of two adjacent 0 swap ARs.
+                 //
 int N_beta; // N beta for N_beta parallel tempering chains
 double *Beta_Values;
 //
@@ -149,6 +159,35 @@ void read_chains_grid(char *path)
     para_name = "N_stoptune";
     para_line = read_onepara(path, para_name);
     sscanf(para_line, "%[^:]:%d", dummy, &N_stoptune);
+    //
+    para_name = "N_begintune";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &N_begintune);
+    //
+    //
+    para_name = "Tune_Ladder";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &Tune_Ladder);
+    //
+    para_name = "N_stopTuneLadder";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &N_stopTuneLadder);
+    //
+    para_name = "trigger_tune_devi";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%lf", dummy, &trigger_tune_devi);
+    //
+    para_name = "trigger_tune_sum";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%lf", dummy, &trigger_tune_sum);
+    //
+    para_name = "scale_tune_ladder";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%lf", dummy, &scale_tune_ladder);
+    //
+    para_name = "double_zero_scale";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%lf", dummy, &double_zero_scale);
     //
     para_name = "N_beta";
     para_line = read_onepara(path, para_name);

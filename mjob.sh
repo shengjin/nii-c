@@ -15,12 +15,12 @@ echo ""
 # Run the executable file
 #
 # to default to the number of hardware threads instead of the number of processor cores
-$MPIRUN -n $NUM --use-hwthread-cpus  ./$OBJ
+#$MPIRUN -n $NUM --use-hwthread-cpus  ./$OBJ
 #
 #  to ignore the number of available slots when deciding the number of processes to launch
 #$MPIRUN -n $NUM --oversubscribe ./$OBJ
 #
-#$MPIRUN -n $NUM ./$OBJ
+$MPIRUN -n $NUM ./$OBJ
 
 # Delete the executable file
 #rm $OBJ

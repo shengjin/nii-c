@@ -6,11 +6,17 @@
 
 #include "alloc.h"
 
-
 extern int N_parm;
 extern int N_swap;
 extern int Swapmode;
 extern char *results_dir;
+
+extern int Tune_Ladder;
+extern int N_stopTuneLadder;
+
+////////////////////////////////////
+int mpi_adjust_ladder(MPI_Status status, int rootsent_tag, int my_rank, int n_ranks, int root_rank, double *doubleInt_Nswaps, double *doubleInt_Nprops, double *running_Beta_Values);
+
 
 int max(int a, int b);
 int min(int a, int b);
@@ -25,26 +31,29 @@ int i4_unif_0a( int a );
 // ...we use i_next rather than i_tmp since at the moment of saving the batch is done
 int save_debug_stack_sequence(unsigned *ptr_i_accumul, int i_swap);
 // save the value of do_swap
-int save_debug_stack_doswap(int do_swap);
+int save_debug_stack_doswap(int do_swap, int i_swap);
+// save the Beta values
+int save_debug_Beta_Values(double *running_Beta_Values, int n_ranks);
 
 // init logpost(posterior)
-double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, double beta_one);
 // init log_pirior
 double log_prior(double *ptr_one_chain);
 
 // declaration of the mpi_batch function
-int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks);
+int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, double *running_Beta_Values);
 
 // judge if a swapping is needed and do it if so
-int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks);
+int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks, double *running_Beta_Values);
 
 // swap the values of two chain
 void swap_two_chains(double *ptr_ichain, double *ptr_jchain, int N_parm);
 
 
-int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
+int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, double *running_Beta_Values)
 {    
-    int save_debug = 0;
+    int save_swap_debug = 0;
+    int save_Beta_debug = 1;
     //
     int i_tmp = 0; 
     int i_next = 0; 
@@ -59,7 +68,35 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
     //
     int i_swap = 0; // lower i_rank of pair of ranks in mpi_swapping 
     int j_swap = 0; // lower i_rank of pair of ranks in mpi_swapping 
+    int do_swap = 0; 
     // 
+    //
+    // adjust Ladders if T_L == 1
+    double * doubleInt_Nswaps;
+    doubleInt_Nswaps = alloc_1d_double(n_ranks);
+    double * doubleInt_Nprops;
+    doubleInt_Nprops = alloc_1d_double(n_ranks);
+    if ((Tune_Ladder > 0) && (my_rank == root_rank))
+    {
+        // alloc the array to sum swaps
+        for(int i = 0; i < n_ranks; i++)
+        {
+            doubleInt_Nswaps[i] = 0;
+            doubleInt_Nprops[i] = 0;
+        }
+    }
+    //
+    //
+    // save Beta_Values for debug
+    if (save_Beta_debug)
+    {
+        if (my_rank == root_rank)
+        {
+            save_debug_Beta_Values(running_Beta_Values, n_ranks);
+        }
+    }
+    //
+    //
     while ( i_next < n_iter_a_stack )
     {
         /////////////////////////////////////////////
@@ -67,6 +104,7 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
         // Calc n_iter_a_batch, i_next
         if (my_rank == root_rank)
         {
+            //
             n_iter_a_batch_adjust = i4_unif_ab(-n_iter_a_batch_rand, n_iter_a_batch_rand);
             n_iter_a_batch = n_iter_a_batch_base + n_iter_a_batch_adjust;
             //
@@ -106,7 +144,7 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
         ////////////////////////////////////////////////////
         //
         // Run a batch
-        mpi_run_a_batch(status, my_rank, n_ranks, root_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, n_iter_a_batch, i_save_begin, nline_data, data_NlineNdim, ptr_sigma_prop, ptr_i_accumul, ptr_i_accumul_accept, logpost_all_ranks);
+        mpi_run_a_batch(status, my_rank, n_ranks, root_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, n_iter_a_batch, i_save_begin, nline_data, data_NlineNdim, ptr_sigma_prop, ptr_i_accumul, ptr_i_accumul_accept, logpost_all_ranks, running_Beta_Values);
         //
         // sync since we need to pass logpost to the ranks in mpi_batch
         MPI_Barrier(MPI_COMM_WORLD);
@@ -125,16 +163,29 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
             }
             //
             // save infos for debug
-            if (save_debug) 
+            if (save_swap_debug) 
             {
                 if (my_rank == root_rank)
                 {
+                    // swap proposal only, should be uniform 
                     save_debug_stack_sequence(ptr_i_accumul, i_swap);
                 }
             }
             //
             // Judge and make swap in case needed
-            mpi_judge_and_swap(status, my_rank, root_rank, slave_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, nline_data, data_NlineNdim, logpost_all_ranks, i_swap, j_swap, Swapmode, n_ranks);
+            do_swap = mpi_judge_and_swap(status, my_rank, root_rank, slave_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, nline_data, data_NlineNdim, logpost_all_ranks, i_swap, j_swap, Swapmode, n_ranks, running_Beta_Values);
+            //
+            //
+            // adjust Ladders if T_L == 1
+            if (Tune_Ladder > 0)
+            {
+                if (my_rank == root_rank)
+                {
+                    doubleInt_Nprops[i_swap] = doubleInt_Nprops[i_swap] + 1;
+                    doubleInt_Nswaps[i_swap] = doubleInt_Nswaps[i_swap] + (double)(do_swap);
+                }
+            }
+            //
         }
         //
         //
@@ -146,22 +197,38 @@ int mpi_static_sigma_stack(MPI_Status status, int my_rank, int n_ranks, int root
         i_tmp = i_next;
     }
     //
+    //
+    //  adust the ladder (temperature) if Tune_Ladder == 1
+    if ( ( (int)*ptr_i_accumul < N_stopTuneLadder) && ( Tune_Ladder > 0) )
+    {
+        {
+            mpi_adjust_ladder(status, rootsent_tag, my_rank, n_ranks, root_rank, doubleInt_Nswaps, doubleInt_Nprops, running_Beta_Values);
+        }
+    }
+    //
+    //
+    free_1d_double(doubleInt_Nswaps);
+    doubleInt_Nswaps = NULL;
+    free_1d_double(doubleInt_Nprops);
+    doubleInt_Nprops = NULL;
+    //
     return 0;
 }
 
 
 
 
-int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks)
+int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int nline_data, double *data_NlineNdim, double *logpost_all_ranks, int i_swap, int j_swap, int Swapmode, int n_ranks, double *running_Beta_Values)
 {    
+    int do_swap = 0; // default not jump
+    // 
     if( my_rank == root_rank )
     {
         // Work for root_rank
         //
         // save infos of swapping
-        int debug_save_swap = 0;
+        int save_swap_debug = 0;
         //
-        int do_swap = 0; // default not jump
         double H;
         double rand_unif;
         //
@@ -215,7 +282,7 @@ int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_
         double logll_tempered_mix_root; 
         double logprior_root;
         // caution: <1> check i,j numbers; <2> check if logprior is needed.
-        logll_tempered_mix_root = logll_beta(&chain_Parm_ichain[0], nline_data, data_NlineNdim, j_swap);
+        logll_tempered_mix_root = logll_beta(&chain_Parm_ichain[0], nline_data, data_NlineNdim, running_Beta_Values[j_swap]);
         logprior_root = log_prior(&chain_Parm_ichain[0]);
         // 3rd value
         logpost_ichain_jbeta = logll_tempered_mix_root + logprior_root;
@@ -255,9 +322,9 @@ int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_
             logpost_all_ranks[j_swap] = logpost_ichain_jbeta;
         }
         //
-        if (debug_save_swap)
+        if (save_swap_debug)
         {
-            save_debug_stack_doswap(do_swap);
+            save_debug_stack_doswap(do_swap, i_swap);
         }
         //
         //
@@ -282,7 +349,7 @@ int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_
         double logprior_slave;
         double logpost_jchain_ibeta_slave; 
         // caution: <1> check i,j numbers; <2> check if logprior is needed.
-        logll_tempered_mix_slave = logll_beta(&chain_Parm_jchain[0], nline_data, data_NlineNdim, i_swap);
+        logll_tempered_mix_slave = logll_beta(&chain_Parm_jchain[0], nline_data, data_NlineNdim, running_Beta_Values[i_swap]);
         logprior_slave = log_prior(&chain_Parm_jchain[0]);
         logpost_jchain_ibeta_slave = logll_tempered_mix_slave + logprior_slave;
         //            
@@ -295,7 +362,7 @@ int mpi_judge_and_swap(MPI_Status status, int my_rank, int root_rank, int slave_
         //
     }
     //
-    return 0;
+    return do_swap;
 }
 
 
@@ -363,7 +430,7 @@ int save_debug_stack_sequence(unsigned *ptr_i_accumul, int i_swap)
 //
 //
 //
-int save_debug_stack_doswap(int do_swap)
+int save_debug_stack_doswap(int do_swap, int i_swap)
 {
     FILE *out;
     //
@@ -380,7 +447,43 @@ int save_debug_stack_doswap(int do_swap)
         exit(3);
     }
     //
-    fprintf(out, "%d\n", do_swap);
+    fprintf(out, "%d", do_swap);
+    fprintf(out, "   ");
+    fprintf(out, "%d", i_swap);
+    fprintf(out, "\n");
+    //
+    // close files
+    if (fclose(out) != 0)
+        fprintf(stderr, "Error in closing file!\n");
+    //
+    return 0;
+}
+
+
+int save_debug_Beta_Values(double *Beta_Values, int n_ranks)
+{
+    FILE *out;
+    //
+    // set fnames
+    char fname[100];
+
+    snprintf(fname, sizeof fname, "%s%s%s", results_dir, "/", "Beta_Values_in_stack.dat");
+    //printf("%s\n", fname);
+    //
+    // open files
+    if ((out = fopen(fname, "a")) == NULL)
+    {
+        fprintf(stderr, "Can't create output file!\n");
+        exit(3);
+    }
+    //
+    //
+    for(int i = 0; i < n_ranks; i++)                                                                                             
+    {                                                                                                                            
+        fprintf(out, "%lf ", Beta_Values[i]);                                                                         
+    }                                                                                                                        
+    fprintf(out, "\n");                                                                                                      
+    //
     //
     // close files
     if (fclose(out) != 0)
@@ -391,5 +494,3 @@ int save_debug_stack_doswap(int do_swap)
 
 
 
-
-                    

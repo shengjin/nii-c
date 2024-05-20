@@ -18,7 +18,7 @@ extern char *results_dir; //dir to save outputs
 
 
 // ...iter the batch, main work done here
-double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double *data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old);
+double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double *data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old, double *running_Beta_Values);
 //
 // ...save the batch: save the chain sellected
 int save_the_batch(double **chain_IterParm, int n_iter_a_batch, char *path, int i_rank, double *logpost, int *accumul, int *accumul_accept);
@@ -39,13 +39,13 @@ double r8_normal_01();
 
 
 // log likelyhood
-double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, double beta_one);
 // log prior
 double log_prior(double *ptr_one_chain);
 
 
 
-int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks)
+int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_batch, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, double *running_Beta_Values)
 {    
     //
     if( my_rank == root_rank )
@@ -77,7 +77,7 @@ int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, 
         //
         // Iterate array : chain, n_iter_a_batch, beta
         //           chain_IterParm filled, logpost_all_ranks updated         
-        logpost_all_ranks[root_rank] = iter_batch_mh(chain_IterParm_root, ptr_sigma_prop, n_iter_a_batch, nline_data, data_NlineNdim, root_rank, ptr_i_accumul, ptr_i_accumul_accept, i_save_begin, logpost_old_root);
+        logpost_all_ranks[root_rank] = iter_batch_mh(chain_IterParm_root, ptr_sigma_prop, n_iter_a_batch, nline_data, data_NlineNdim, root_rank, ptr_i_accumul, ptr_i_accumul_accept, i_save_begin, logpost_old_root, running_Beta_Values);
         // ...copy the final parm_set to tranist_B.P. array
         for(int i = 0; i < N_parm; i++)
 	{
@@ -115,7 +115,7 @@ int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, 
         //
         // Iter the chains
         double logpost_final_slave;
-        logpost_final_slave = iter_batch_mh(chain_IterParm_slave, ptr_sigma_prop,  n_iter_a_batch, nline_data, data_NlineNdim, my_rank, ptr_i_accumul, ptr_i_accumul_accept, i_save_begin, logpost_old_slave);
+        logpost_final_slave = iter_batch_mh(chain_IterParm_slave, ptr_sigma_prop,  n_iter_a_batch, nline_data, data_NlineNdim, my_rank, ptr_i_accumul, ptr_i_accumul_accept, i_save_begin, logpost_old_slave, running_Beta_Values);
         //
         // Send root_rank the final parm set
         MPI_Send(&chain_IterParm_slave[n_iter_a_batch-1][0], N_parm, MPI_DOUBLE, root_rank, slavereturn_tag, MPI_COMM_WORLD); 
@@ -135,7 +135,7 @@ int mpi_run_a_batch(MPI_Status status, int my_rank, int n_ranks, int root_rank, 
 
 
 
-double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double *data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old)
+double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter_a_batch, int nline_data, double *data_NlineNdim, int i_rank, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, unsigned i_save_begin, double logpost_old, double *running_Beta_Values)
 {
     //
     int *accumul_accept;
@@ -198,7 +198,7 @@ double iter_batch_mh(double **chain_IterParm, double *ptr_sigma_prop, int n_iter
         //
         /////////////////////////
         // ...calc logll, log_p, and the logpost for the proposed chain 
-        logll_tempered_new = logll_beta(ptr_one_chain_new, nline_data, data_NlineNdim, i_rank);
+        logll_tempered_new = logll_beta(ptr_one_chain_new, nline_data, data_NlineNdim, running_Beta_Values[i_rank]);
         logprior_new = log_prior(ptr_one_chain_new);
         logpost_new = logll_tempered_new + logprior_new;
         //

@@ -10,6 +10,8 @@
 extern int N_iter; // N iteration in each chain
 extern int N_parm; // N_para of model parameters in each chain.
 
+extern double *Beta_Values;
+                   
 extern char *results_dir; //dir to save outputs
 
 extern char *Data_file;   // user data file
@@ -55,7 +57,7 @@ int mpi_gather_sigma_prop_root(MPI_Status status, int my_rank, int n_ranks, int 
 
 
 // declaration of the mpi flow function
-int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root);
+int mpi_entire_flow(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, int slavereturn_tag, double **transit_BetaParm_root, int n_iter_a_stack, int n_iter_a_batch_base, int n_iter_a_batch_rand, unsigned i_save_begin, int nline_data, double *data_NlineNdim, double *ptr_sigma_prop, unsigned *ptr_i_accumul, unsigned *ptr_i_accumul_accept, double *logpost_all_ranks, int N_iter, int n_iter_in_tune, double ar_ok_lower, double ar_ok_upper, double **sigma_RanksParm_root, double *running_Beta_Values);
 
 
 
@@ -187,10 +189,18 @@ int main(int argc, char *argv[])
     ptr_i_accumul = &i_accumul;
     ptr_i_accumul_accept = &i_accumul_accept;
 
+    /////////////////////////////////////////////////
+    // create a running Beta_Values to tune ladder
+    double * running_Beta_Values;  
+    running_Beta_Values = alloc_1d_double(n_ranks);
+    for (int i=0; i<n_ranks; i++)
+    {
+        running_Beta_Values[i] = Beta_Values[i];  
+    }
 
     // Run a flow of stacks of batches. Where we tune sigma_prop between stacks and swap chains between batches
     // 
-    mpi_entire_flow(status, my_rank, n_ranks, root_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, n_iter_a_stack,  n_iter_a_batch_base, n_iter_a_batch_rand, i_save_begin, nline_data, data_NlineNdim, ptr_sigma_prop, ptr_i_accumul, ptr_i_accumul_accept, logpost_all_ranks, N_iter, n_iter_in_tune, ar_ok_lower, ar_ok_upper, sigma_RanksParm_root);
+    mpi_entire_flow(status, my_rank, n_ranks, root_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, n_iter_a_stack,  n_iter_a_batch_base, n_iter_a_batch_rand, i_save_begin, nline_data, data_NlineNdim, ptr_sigma_prop, ptr_i_accumul, ptr_i_accumul_accept, logpost_all_ranks, N_iter, n_iter_in_tune, ar_ok_lower, ar_ok_upper, sigma_RanksParm_root, running_Beta_Values);
     
 
     // SYNC 
@@ -227,6 +237,9 @@ int main(int argc, char *argv[])
     //
     free_1d_double(sigma_gaussian_prop);  
     sigma_gaussian_prop = NULL;  
+    //
+    free_1d_double(running_Beta_Values);
+    running_Beta_Values = NULL;  
 
 
     /////////////////////////////////////////////////////

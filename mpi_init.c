@@ -18,7 +18,7 @@ int save_the_seed(unsigned seed, char *path, int i_rank);
 int save_init_parm(double **transit_BetaParm, char *path, int n_ranks, int N_parm);
 
 // init logpost(posterior)
-double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, double beta_one);
 // init log_pirior
 double log_prior(double *ptr_one_chain);
 
@@ -153,7 +153,7 @@ int mpi_init_calc_logllpp(MPI_Status status, int my_rank, int n_ranks, int root_
         double logll_tempered_root;
         double logprior_root;
         double logpost_root;
-        logll_tempered_root = logll_beta(&chain_Parm_root[0], nline_data, data_NlineNdim, root_rank);
+        logll_tempered_root = logll_beta(&chain_Parm_root[0], nline_data, data_NlineNdim, Beta_Values[root_rank]);
         logprior_root = log_prior(&chain_Parm_root[0]);
         logpost_root = logll_tempered_root + logprior_root;
         logpost_all_ranks[root_rank] = logpost_root;
@@ -188,7 +188,7 @@ int mpi_init_calc_logllpp(MPI_Status status, int my_rank, int n_ranks, int root_
         double logll_tempered_slave;
         double logprior_slave;
         double logpost_slave;
-        logll_tempered_slave = logll_beta(&chain_Parm_slave[0], nline_data, data_NlineNdim, my_rank);
+        logll_tempered_slave = logll_beta(&chain_Parm_slave[0], nline_data, data_NlineNdim, Beta_Values[my_rank]);
         logprior_slave = log_prior(&chain_Parm_slave[0]);
         logpost_slave = logll_tempered_slave + logprior_slave;
 	//

@@ -135,6 +135,8 @@ This following list describes the primary subroutine files of Nii-C.
 
    \item  $mpi\_tune.c$ $-$ This file includes all the functions related to the tuning process, which aims to automatically adjust the sampling step sizes of all parallel tempering chains with bad acceptance rates using a automatic control system.
 
+   \item  $mpi\_ladder.c$ $-$ This file includes a simple algorithm to the tune the ladders of the parallel tempering chains in the beginning tuning stage.
+
   \item $data\_loader.c$ $-$ This file contains the functions for loading the user data files.
 
   \item  $readin.c$ $-$ It contains functions for reading the input parameters of Nii-C. These parameters control the overall APT-MCMC process.

@@ -3,7 +3,7 @@
 CC=mpicc
 
 
-CFLAGS = -Wall -Werror 
+CFLAGS = -Wall #-Werror 
 CFLAGS += -Wextra
 CFLAGS += -O2 	#-O3
 
@@ -11,8 +11,8 @@ CFLAGS += -O2 	#-O3
 CFLAGS += -lm 
  
 # tune_sigma.c: 
-mtmc: main.c mpi_init.c mpi_batch.c mpi_stack.c mpi_flow.c mpi_tune.c data_loader.c alloc.c rand_func.c readin.c user_logll.c user_prior.c 
-	$(CC) main.c mpi_init.c mpi_batch.c mpi_stack.c mpi_flow.c mpi_tune.c data_loader.c alloc.c rand_func.c readin.c user_logll.c user_prior.c $(CFLAGS) -o a.out
+mtmc: main.c mpi_init.c mpi_batch.c mpi_stack.c mpi_flow.c mpi_tune.c mpi_ladder.c data_loader.c alloc.c rand_func.c readin.c user_logll.c user_prior.c 
+	$(CC) main.c mpi_init.c mpi_batch.c mpi_stack.c mpi_flow.c mpi_tune.c mpi_ladder.c data_loader.c alloc.c rand_func.c readin.c user_logll.c user_prior.c $(CFLAGS) -o a.out
 
 clean:
 	rm -rf *.o
