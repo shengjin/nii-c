@@ -11,9 +11,8 @@ extern char *results_dir;
 extern int Tune_Ladder;
 //  NOTE  scale the tuning of Temperature
 extern double scale_tune_ladder;
-extern double trigger_tune_devi;
-extern double trigger_tune_sum;
-extern double double_zero_scale;
+extern double zero_stretch;
+
 
 // distribut running_Beta_Values from root
 int mpi_distribute_running_Beta_root(MPI_Status status, int my_rank, int n_ranks, int root_rank, int rootsent_tag, double *running_Beta_Values);
@@ -104,7 +103,7 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
 {
     //
     // print debug 
-    int debug = 0;
+    int debug = 1;
     //
     ////////////////////////////////////////////////////////////////
     // temperature ladder: where T_i = 1/beta_i
@@ -119,7 +118,7 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
     ////////////////////////////////////////////////////////////////
     // swap accept rate between chain i and chain i+1
     double * swap_ar_i_ip1;
-    swap_ar_i_ip1 = alloc_1d_double(n_ranks);
+    swap_ar_i_ip1 = alloc_1d_double(n_ranks-1);
     for (int i=0; i<n_ranks-1; i++)
     {
         swap_ar_i_ip1[i] = doubleInt_Nswaps[i]/doubleInt_Nprops[i];
@@ -132,63 +131,74 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
     //
     //
     double devi_of_mean;
-    double ratio_devi_mean;
     //
     for (int i=1; i<n_ranks-1; i++)
     {
         // 
         if ( (swap_ar_i_ip1[i-1]+swap_ar_i_ip1[i]) > 0 ) 
         {
-            if ( (swap_ar_i_ip1[i-1]+swap_ar_i_ip1[i]) > trigger_tune_sum ) 
+            // calc for chain i the difference between two neighbor swap acceptance rates
+            // In case of a increasing beta array:
+            // if devi_of_mean > 0:  then T_i and T_i_p1 too close, T_i_m1 and T_i too far, 
+            //      then decrease beta, i.e., increase Ti  
+            // if devi_of_mean < 0:  then T_i and T_i_m1 too close, T_i_p1 and T_i too far, 
+            //      then increase beta, i.e., decrease Ti  
+            devi_of_mean = (swap_ar_i_ip1[i]-swap_ar_i_ip1[i-1]) / (swap_ar_i_ip1[i]+swap_ar_i_ip1[i-1]);
+            //
+            if (debug)
             {
-                // calc for chain i the difference between two neighbor swap acceptance rates
-                // In case of a increasing beta array:
-                // if devi_of_mean > 0:  then T_i and T_i_p1 too close, T_i_m1 and T_i too far, 
-                //      then decrease beta, i.e., increase Ti  
-                // if devi_of_mean < 0:  then T_i and T_i_m1 too close, T_i_p1 and T_i too far, 
-                //      then increase beta, i.e., decrease Ti  
-                devi_of_mean = swap_ar_i_ip1[i] - (swap_ar_i_ip1[i-1] + swap_ar_i_ip1[i])/2;
-                ratio_devi_mean = devi_of_mean / (swap_ar_i_ip1[i-1] + swap_ar_i_ip1[i])/2;
+                printf("i: %d,  %lf %lf %lf.\n", i, swap_ar_i_ip1[i-1], swap_ar_i_ip1[i], devi_of_mean);
+            }
+            //
+            ////////////////////////////////////////////////////////////////
+            // Change T_ladder
+            //
+            printf("        Tune the ladder %d .\n", i);
+            // if devi_of_mean > 0, increase Ti based on T_i_m1 (limit)
+            if ( devi_of_mean > 0 )
+            {
+                double T_diff;
+                double T_increase;
+                T_diff = (1/running_Beta_Values[i-1]) - (1/running_Beta_Values[i+1]) ;  // > 0
+                //
+                if (devi_of_mean == 1)
+                {
+                    T_increase = T_diff * (1-zero_stretch);
+                }
+                else
+                {
+                    T_increase = T_diff * devi_of_mean * scale_tune_ladder;
+                }
+                //
+                T_ladder[i] = T_ladder[i+1] + T_increase;
                 //
                 if (debug)
                 {
-                    printf("i: %d,  %lf  %lf %lf %lf.\n", i, swap_ar_i_ip1[i-1], swap_ar_i_ip1[i], devi_of_mean, ratio_devi_mean);
+                    printf("i: %d, Tdiff %lf devi_of_mean %lf  T_increase %lf T_ladder_new %lf T_old_im1 %lf T_old_i %lf.\n", i, T_diff, devi_of_mean, T_increase, T_ladder[i], (1/running_Beta_Values[i-1]),  (1/running_Beta_Values[i]) );
                 }
                 //
-                ////////////////////////////////////////////////////////////////
-                // Change T_ladder
+            }
+            // if devi_of_mean <= 0, decrease Ti based on T_i_p1 (limit)
+            else 
+            {
+                double T_diff;
+                double T_decrease;
+                T_diff = (1/running_Beta_Values[i-1]) - (1/running_Beta_Values[i+1]) ; // > 0
                 //
-                if (fabs(devi_of_mean) > trigger_tune_devi)
+                if (devi_of_mean == -1)
                 {
-                    printf("        Tune the ladder %d .\n", i);
-                    // if devi_of_mean > 0, increase Ti based on T_i_m1 (limit)
-                    if ( devi_of_mean > 0 )
-                    {
-                        double threshold_multiple;
-                        double multiple_T_increase;
-                        threshold_multiple = 1/running_Beta_Values[i-1] / (1/running_Beta_Values[i]) ;
-                        multiple_T_increase = threshold_multiple * devi_of_mean * scale_tune_ladder;
-                        T_ladder[i] = T_ladder[i] * multiple_T_increase;
-                        if (debug)
-                        {
-                            printf("i: %d,  %lf %lf %lf %lf tm.\n", i, threshold_multiple, devi_of_mean, multiple_T_increase, T_ladder[i]);
-                        }
-                        //
-                    }
-                    // if devi_of_mean <= 0, decrease Ti based on T_i_p1 (limit)
-                    else 
-                    {
-                        double threshold_multiple;
-                        double multiple_T_decrease;
-                        threshold_multiple = 1/running_Beta_Values[i] / (1/running_Beta_Values[i+1]) ;
-                        multiple_T_decrease = threshold_multiple * (1.0 + devi_of_mean) * scale_tune_ladder;
-                        T_ladder[i] = T_ladder[i+1] * multiple_T_decrease;
-                        if (debug)
-                        {
-                            printf("i: %d, %lf  %lf %lf %lf tm.\n", i, threshold_multiple, devi_of_mean, multiple_T_decrease, T_ladder[i]);
-                        }
-                        //
-                    }
+                    T_decrease = T_diff *  (1-zero_stretch);
+                }
+                else
+                {
+                    T_decrease = T_diff * (-devi_of_mean) * scale_tune_ladder;
+                }
+                //
+                T_ladder[i] = T_ladder[i-1] - T_decrease;
+                //
+                if (debug)
+                {
+                    printf("i: %d, Tdiff %lf devi_of_mean %lf  T_decrease %lf T_ladder_new %lf T_old_i %lf T_old_ip1 %lf.\n", i, T_diff, devi_of_mean, T_decrease, T_ladder[i], (1/running_Beta_Values[i]),  (1/running_Beta_Values[i+1]) );
                 }
                 //
             }
@@ -198,8 +208,26 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
         //  in case of two zero swap acceptance rates:
         else
         {
-            T_ladder[i] = (T_ladder[i-1] - T_ladder[i]) * double_zero_scale + T_ladder[i];
+            double Total_T_multiple;
+            Total_T_multiple = (1/running_Beta_Values[i-1]) / (1/running_Beta_Values[i+1]) ; 
+            double each_time_T_multiple;
+            each_time_T_multiple = pow(Total_T_multiple, (0.5));
+            // reset the ladder
+            T_ladder[i] = T_ladder[i-1] / each_time_T_multiple;
             printf("        Tune the ladder %d (double 0 swap_ARs). \n", i);
+        }
+        //
+        // specifically tune T_ladder[1] and T_ladder[n_rank-2]
+        double sub_boundary_critical;
+        sub_boundary_critical = 0.01;
+        if (swap_ar_i_ip1[0] < sub_boundary_critical)
+        {
+            T_ladder[1] = T_ladder[0] - (T_ladder[0] - T_ladder[2]) * zero_stretch;
+        }
+        //
+        if (swap_ar_i_ip1[n_ranks-2] < sub_boundary_critical)
+        {
+            T_ladder[n_ranks-2] = T_ladder[n_ranks-3] - (T_ladder[n_ranks-3] - T_ladder[n_ranks-1]) * (1-zero_stretch);
         }
         //
     }
