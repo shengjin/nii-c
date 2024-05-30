@@ -132,6 +132,8 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
     //
     double devi_of_mean;
     //
+    const double Check_boundary = 0.01;
+    //
     for (int i=1; i<n_ranks-1; i++)
     {
         // 
@@ -159,7 +161,7 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
             {
                 double T_diff;
                 double T_increase;
-                T_diff = (1/running_Beta_Values[i-1]) - (1/running_Beta_Values[i+1]) ;  // > 0
+                T_diff = (1/running_Beta_Values[i-1]) - (1/running_Beta_Values[i]) ;  // > 0
                 //
                 if (devi_of_mean == 1)
                 {
@@ -170,7 +172,10 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
                     T_increase = T_diff * devi_of_mean * scale_tune_ladder;
                 }
                 //
-                T_ladder[i] = T_ladder[i+1] + T_increase;
+                T_ladder[i] = T_ladder[i] + T_increase;
+                //
+                // to insure new T ladder are inside T_i+1
+                T_ladder[i] = fmin(T_ladder[i], (1/running_Beta_Values[i-1])*(1-Check_boundary));
                 //
                 if (debug)
                 {
@@ -178,12 +183,29 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
                 }
                 //
             }
-            // if devi_of_mean <= 0, decrease Ti based on T_i_p1 (limit)
+            else if (devi_of_mean == 0)
+            {
+                // how to tune in case same Swap_AR (most likely both 1)?
+                double Total_T_multiple;
+                Total_T_multiple = (1/running_Beta_Values[i-1]) / (1/running_Beta_Values[i+1]) ; 
+                double each_time_T_multiple;
+                each_time_T_multiple = pow(Total_T_multiple, (0.5));
+                // reset the ladder
+                T_ladder[i] = T_ladder[i-1] / each_time_T_multiple;
+                printf("        Tune the ladder %d ( most likely double 1 swap_ARs). \n", i);
+                if (debug)
+                {
+                    printf("i: %d, devi_of_mean  %lf T_ladder_new %lf T_old_i %lf .\n", i, devi_of_mean,  T_ladder[i], (1/running_Beta_Values[i]) );
+                }
+            }
+            //  
+            //  first tune not right
             else 
             {
+// if devi_of_mean < 0, decrease Ti based on T_i_p1 (limit)
                 double T_diff;
                 double T_decrease;
-                T_diff = (1/running_Beta_Values[i-1]) - (1/running_Beta_Values[i+1]) ; // > 0
+                T_diff = (1/running_Beta_Values[i]) - (1/running_Beta_Values[i+1]) ; // > 0
                 //
                 if (devi_of_mean == -1)
                 {
@@ -194,7 +216,9 @@ int tune_ladder_use_3_neighb(int n_ranks, double *doubleInt_Nswaps, double *doub
                     T_decrease = T_diff * (-devi_of_mean) * scale_tune_ladder;
                 }
                 //
-                T_ladder[i] = T_ladder[i-1] - T_decrease;
+                T_ladder[i] = T_ladder[i] - T_decrease;
+                //
+                T_ladder[i] = fmax(T_ladder[i], (1/running_Beta_Values[i+1])*(1+Check_boundary));
                 //
                 if (debug)
                 {
