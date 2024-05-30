@@ -1,0 +1,101 @@
+/* we use "para_name"+":" to search input parameters. */
+/* NOTE: the "para_name" str should no appear in comments */
+
+# setting the chain grid
+N_iter:                 2000000
+# NOTE: N-beta == n-ranks since we set n-ranks based on N-beta, should at least be 2
+N_beta:	                4
+Beta_Values:            0.001, 0.002, 0.999, 1
+#:            0.001, 0.002, 0.003, 1
+
+# tune the temperature or not
+Tune_Ladder:            1
+N_stopTuneLadder:       300000
+# ladder tuning parameters
+# scale parameters of ladder tuning
+scale_tune_ladder:      0.7
+                        0.8
+# in case zero swap ar occurs
+zero_stretch:           0.2
+                        0.3
+
+#
+
+# test case
+N_parm:     	        5  
+#
+# set total N-iteration in a stack of batches
+n_iter_a_stack:         5000
+# number of iteration in a batch before judging should a swap be taken
+n_iter_a_batch_base:    20
+# random +/- range of n-iter-a-batch-base (must < n-iter-a-batch-base)
+n_iter_a_batch_rand:    5
+# Number of swaping propose will be tested
+N_swap:                 1
+# neighbor swap (0) or random swap (1)  
+Swapmode:               0
+
+# tuning the proposals 
+# stop the tuning after N-stoptune
+N_stoptune:             1000000
+# begin the tuning after N-stoptune
+N_begintune:            300000
+#
+# the N-iteration in tuning sigma_prop
+n_iter_in_tune:         3000
+# the lower boundary ok accept rate  
+ar_ok_lower:            0.10
+# the upper boundary ok accept rate  
+ar_ok_upper:            0.45
+# the best ar
+ar_best:                0.23
+# the maximum diff for an acceptable ar
+ar_accept_diff:         0.1
+#
+sigma_scale_half_ratio: 20
+#
+
+# set the range of sigma (check the set_sigma_range function in readin.c)
+sigma_scale_min:        0.0000000005
+sigma_scale_max:        0.2
+# reset the sigma in the range if out of the min/max boundary
+sigma_jumpin_ratio:     300
+
+# save the chain starting from (burning)
+i_save_begin:           0
+
+# initial random seed(rolling in mpi), set it <= 0 to use system time 
+init_rand_seed:         20 
+# ratio of the init gaussian_proposal_sigma to the allowed prior range
+init_gp_ratio:          0.001
+
+
+# prior 
+a_min:              -5.12
+a_max:              5.12
+b_min:              -5.120
+b_max:              5.120
+c_min:              -5.120
+c_max:              5.120
+d_min:              -5.120
+d_max:              5.120
+f_min:              -5.120
+f_max:              5.120
+
+
+# file name of output
+Fout_Len: 	    100
+FoutPre: 	    chain
+FoutSuf: 	    .dat
+results_dir: 	    results082900 
+
+
+# about the datafile 
+# set delimiter as "blank" if data is seperated as " "
+Data_file:           xy.dat
+ndim_data:           2
+Delimiter:           blank           
+
+
+
+
