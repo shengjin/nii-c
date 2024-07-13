@@ -2,16 +2,15 @@
 #include <stdio.h>
 #include <math.h>
 
-extern double *Beta_Values;
 
 //////////////////////////////
 // NOTE: change logll_beta in mpi_batch/init if func_prototype is changed.
-double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank);
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, double beta_one);
 
 double value_calc(double a, double b);
 
 // N_parm not explicitly declare here because we will use each of parms invery detail, thus for sure we know the number.
-double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, int i_rank)
+double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim, double beta_one)
 {
    /* model description:
     * 
@@ -27,7 +26,7 @@ double logll_beta(double *ptr_one_chain, int nline_data, double *data_NlineNdim,
     double logll;
 
     value = value_calc(a, b);
-    logll = value*Beta_Values[i_rank];
+    logll = value*beta_one;
     //    
     return logll;
 }
