@@ -105,6 +105,27 @@ void init_parm_set(int seed, double* chain_parm)
     sigma_parm_max = (double *) malloc(sizeof(double)*N_parm);
     calc_sigma_scale_boundary(sigma_scale_min, sigma_scale_max, sigma_parm_min, sigma_parm_max);
 }
+//
+void init_parm_manual(double *init_loci, double* chain_parm)
+{
+    for (int i=0; i<N_parm; i++)
+    {
+        chain_parm[i] = init_loci[i];
+    }
+    //
+    char *input_file;
+    input_file = "input.ini";
+    // read the range
+    read_parm_range(input_file);
+    //
+       ////// set sigma tuning range of parms
+    //
+    sigma_parm_min = (double *) malloc(sizeof(double)*N_parm);
+    sigma_parm_max = (double *) malloc(sizeof(double)*N_parm);
+    calc_sigma_scale_boundary(sigma_scale_min, sigma_scale_max, sigma_parm_min, sigma_parm_max);
+}
+
+
 
 
 // set init gaussian proposal for the sampling
@@ -127,6 +148,18 @@ int init_gaussian_proposal(double *ptr_sigma_prop, double init_gp_ratio)
     //
 }
 
+//
+int init_gaussian_proposal_manual(double *ptr_sigma_prop, double *init_step, double *scale_step_beta, int my_rank)
+{
+    *(ptr_sigma_prop+0) = (a_max - a_min) * init_step[0] * scale_step_beta[my_rank];
+    *(ptr_sigma_prop+1) = (b_max - b_min) * init_step[1] * scale_step_beta[my_rank];
+    *(ptr_sigma_prop+2) = (d_max - d_min) * init_step[2] * scale_step_beta[my_rank];
+
+    //
+    return 0;
+    //
+}
+   
 
 //////////////////////////////////
 //
