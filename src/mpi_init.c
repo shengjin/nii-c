@@ -12,6 +12,9 @@ extern char *results_dir; //dir to save outputs
 extern char *FoutPre;
 extern char *FoutSuf;
 
+// specify the initial parameter loci , step sizes
+extern int Loci_init;
+extern double *init_loci;
 
 int save_the_seed(unsigned seed, char *path, int i_rank);
 
@@ -24,6 +27,8 @@ double log_prior(double *ptr_one_chain);
 
 // set init random parameterS at N_ITER = 0 for one chain
 void init_parm_set(int seed, double *chain_parm);
+//
+void init_parm_manual(double *init_loci, double *chain_parm);
 
 // save the first chain and its logpost
 int save_first_chain(double *chain_Parm, char *path, int i_rank, double logpost_first, int N_parm);
@@ -61,8 +66,17 @@ int mpi_gen_init_parm(MPI_Status status, int my_rank, int n_ranks, int root_rank
         {
             save_the_seed(*ptr_rolling_seed, results_dir, my_rank);
         }
+	//
         // ...gen the parameters
-        init_parm_set(*ptr_rolling_seed, &transit_BetaParm_root[root_rank][0]);
+	if (Loci_init)
+	{
+            init_parm_manual(init_loci, &transit_BetaParm_root[root_rank][0]);
+	}
+	else 
+	{
+            init_parm_set(*ptr_rolling_seed, &transit_BetaParm_root[root_rank][0]);
+	}
+	//
         //
         // Collect the random initial parmES generated from the slave processes. 
         for(int i_rank = 0; i_rank < n_ranks; i_rank++)
@@ -101,7 +115,16 @@ int mpi_gen_init_parm(MPI_Status status, int my_rank, int n_ranks, int root_rank
         chain_Parm_slave = alloc_1d_double(n_to_generate_slave);
         //
         // Gen the initial random parm at iter = 0
-        init_parm_set(rolling_seed_slave, chain_Parm_slave);
+	if (Loci_init)
+	{
+            init_parm_manual(init_loci, chain_Parm_slave);
+	}
+	else 
+	{
+            // init_parm_set(*ptr_rolling_seed, &transit_BetaParm_root[root_rank][0]);
+            init_parm_set(rolling_seed_slave, chain_Parm_slave);
+	}
+	//
         //
         // Send root_rank the generatED parm
         MPI_Send(&chain_Parm_slave[0], n_to_generate_slave, MPI_DOUBLE, root_rank, slavereturn_tag, MPI_COMM_WORLD); 

@@ -12,6 +12,11 @@ extern int N_parm; // N_para of model parameters in each chain.
 
 extern double *Beta_Values;
                    
+// to specify gaussian proposals for each param in each chain (manually)
+extern int Step_init;
+extern double *init_step;
+extern double *scale_step_beta;
+
 extern char *results_dir; //dir to save outputs
 
 extern char *Data_file;   // user data file
@@ -36,8 +41,11 @@ extern double ar_ok_upper;       //
 int read_input_ini(char *path);
 // check and mkdir for outputs
 int make_dir(char *path);
+
 // set init gaussian proposal for the sampling
 int init_gaussian_proposal(double *ptr_sigma_prop, double init_gp_ratio);
+int init_gaussian_proposal_manual(double *ptr_sigma_prop, double *init_step, double *scale_step_beta, int my_rank);
+
 // to save the sigma of gaussian proposal for each rank
 int save_sigma_gauss_prop(double *ptr_sigma_prop, int i_rank);
 
@@ -143,6 +151,8 @@ int main(int argc, char *argv[])
     logpost_all_ranks = alloc_1d_double(n_ranks);
     // calc the initial logpost_all_ranks
     mpi_init_calc_logllpp(status, my_rank, n_ranks, root_rank, rootsent_tag, slavereturn_tag, transit_BetaParm_root, nline_data, data_NlineNdim, N_parm, logpost_all_ranks);
+
+
     // 
     // 2d matrix at root to monitor, change, and distribute ptr_sigma_prop of all ranks
     double ** sigma_RanksParm_root;  
@@ -171,7 +181,14 @@ int main(int argc, char *argv[])
     ptr_sigma_prop = &sigma_gaussian_prop[0];
     //
     //init_gp should behind mpi_gen_init_parm that reads parms max and min 
-    init_gaussian_proposal(ptr_sigma_prop, init_gp_ratio);
+    if (Step_init == 1)
+    {
+	init_gaussian_proposal_manual(ptr_sigma_prop, init_step, scale_step_beta, my_rank);
+    }
+    else
+    {
+        init_gaussian_proposal(ptr_sigma_prop, init_gp_ratio);
+    }
     // save gaussian_proposal
     save_sigma_gauss_prop(ptr_sigma_prop, my_rank);
     //

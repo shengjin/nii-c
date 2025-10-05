@@ -2,7 +2,7 @@
 
 
 # define the number of parameters
-n = 3 # int(input("Set the number of parameters : "))
+n = 13 # int(input("Set the number of parameters : "))
 
 
 
@@ -228,6 +228,25 @@ c1 = """    ////// set sigma tuning range of parms
     //
     calc_sigma_scale_boundary(sigma_scale_min, sigma_scale_max, sigma_parm_min, sigma_parm_max);
 }
+//
+void init_parm_manual(double *init_loci, double* chain_parm)
+{
+    for (int i=0; i<N_parm; i++)
+    {
+        chain_parm[i] = init_loci[i];
+    }
+    //
+    char *input_file;
+    input_file = "input.ini";
+    // read the range
+    read_parm_range(input_file);
+    //
+       ////// set sigma tuning range of parms
+    //
+    sigma_parm_min = (double *) malloc(sizeof(double)*N_parm);
+    sigma_parm_max = (double *) malloc(sizeof(double)*N_parm);
+    calc_sigma_scale_boundary(sigma_scale_min, sigma_scale_max, sigma_parm_min, sigma_parm_max);
+}
 """
 with open("user_prior.c", "a", encoding="utf-8") as f:
     f.write(c0)
@@ -301,7 +320,7 @@ with open("user_prior.c", "a", encoding="utf-8") as f:
  
  
  
- ################################## Part 6.1:init gaussian proposal ##########    
+################################## Part 6.1:init gaussian proposal ##########    
 c0 ="""
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -323,7 +342,17 @@ c3 = """
     return 0; 
     //
 }
+//
+int init_gaussian_proposal_manual(double *ptr_sigma_prop, double *init_step, double *scale_step_beta, int my_rank)
+{
+"""
+c4 = """
+    //
+    return 0;
+    //
+}
    """
+
 with open("user_prior.c", "a", encoding="utf-8") as f:
     f.write(c0)
     f.write("    //\n")
@@ -339,6 +368,10 @@ with open("user_prior.c", "a", encoding="utf-8") as f:
         s0 = "%s%d%s%d%s\n" % ("    *(ptr_sigma_prop+",i,") = para",i,"_gp;")
         f.write(s0)
     f.write(c3)
+    for i in range(n):
+        s0 = "%s%d%s%d%s%d%s%d%s\n" % ("    *(ptr_sigma_prop+",i,") = (para",i,"_max - para",i,"_min) * init_step[",i,"] * scale_step_beta[my_rank];")
+        f.write(s0)
+    f.write(c4)
 
 
 

@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 
 
-#define DEST_SIZE 100
+#define DEST_SIZE 200
 
 
 int N_parm; // N parameters of a sampling model
@@ -45,6 +45,12 @@ double sigma_jumpin_ratio;
 //
 unsigned i_save_begin; // burning
 
+int Loci_init; // to specify initial parameter locations
+double *init_loci;
+int Step_init; // to specify initial parameter step sizes (proposals)
+double *init_step;
+double *scale_step_beta;
+
 double init_gp_ratio; // init_gp_sigma / prior_range
 unsigned init_rand_seed; // init_random seed
 
@@ -69,6 +75,11 @@ void read_chains_grid(char *path);
 
 // read beta values
 int read_beta_values(char *path);
+
+// 
+int read_loci_values(char *path);
+int read_step_values(char *path);
+int read_scale_step_beta(char *path);
 
 // setting prefix and suffix of the output chains_dat
 void read_chain_out_name(char *path);
@@ -163,6 +174,14 @@ void read_chains_grid(char *path)
     para_name = "N_begintune";
     para_line = read_onepara(path, para_name);
     sscanf(para_line, "%[^:]:%d", dummy, &N_begintune);
+    //
+    para_name = "Loci_init";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &Loci_init);
+    //
+    para_name = "Step_init";
+    para_line = read_onepara(path, para_name);
+    sscanf(para_line, "%[^:]:%d", dummy, &Step_init);
     //
     //
     para_name = "Tune_Ladder";
@@ -303,6 +322,132 @@ int read_beta_values(char *path)
 }
 
 
+int read_loci_values(char *path)
+{
+    char *para_line; 
+    //
+    char *read_onepara(char *path, char *para_name);
+    //
+    char *para_name;
+    //
+    char* token;
+    //
+    int found = 0;
+    //
+    init_loci = (double *) malloc(sizeof(double)*N_parm);
+    //
+    para_name = "init_loci";
+    para_line = read_onepara(path, para_name);
+    //
+    token = strtok(para_line, ":");
+ 
+    while ((token = strtok(NULL, ",")))
+    {
+	init_loci[found] = atof(token);
+	found++;
+    }
+    //
+    free(para_line);
+    para_line = NULL;
+    //
+    // check number of found and number of N_beta
+    if (found == N_parm)
+    {
+        return EXIT_SUCCESS; 
+    } 
+    else 
+    {
+	init_loci = NULL;
+        return EXIT_FAILURE; 
+    }
+}
+
+
+int read_step_values(char *path)
+{
+    char *para_line; 
+    //
+    char *read_onepara(char *path, char *para_name);
+    //
+    char *para_name;
+    //
+    char* token;
+    //
+    int found = 0;
+    //
+    init_step = (double *) malloc(sizeof(double)*N_parm);
+    //
+    para_name = "init_step";
+    para_line = read_onepara(path, para_name);
+    //
+    token = strtok(para_line, ":");
+ 
+    while ((token = strtok(NULL, ",")))
+    {
+	init_step[found] = atof(token);
+	found++;
+    }
+    //
+    free(para_line);
+    para_line = NULL;
+    //
+    // check number of found and number of N_beta
+    if (found == N_parm)
+    {
+        return EXIT_SUCCESS; 
+    } 
+    else 
+    {
+	init_step = NULL;
+        return EXIT_FAILURE; 
+    }
+}
+
+
+int read_scale_step_beta(char *path)
+{
+    char *para_line; 
+    //
+    char *read_onepara(char *path, char *para_name);
+    //
+    char *para_name;
+    //
+    char* token;
+    //
+    int found = 0;
+    //
+    scale_step_beta = (double *) malloc(sizeof(double)*N_beta);
+    //
+    para_name = "scale_step_beta";
+    para_line = read_onepara(path, para_name);
+    //
+    token = strtok(para_line, ":");
+ 
+    while ((token = strtok(NULL, ",")))
+    {
+	scale_step_beta[found] = atof(token);
+	found++;
+    }
+    //
+    free(para_line);
+    para_line = NULL;
+    //
+    // check number of found and number of N_beta
+    if (found == N_beta)
+    {
+        return EXIT_SUCCESS; 
+    } 
+    else 
+    {
+	scale_step_beta = NULL;
+        return EXIT_FAILURE; 
+    }
+}
+
+
+
+
+
 void read_sampling_para(char *path)
 {
     char *para_line; 
@@ -415,6 +560,40 @@ int read_input_ini(char *path)
     read_data_desc(path);
     // read control parms of bayes sampling
     read_sampling_para(path);
+    // 
+    //
+    if (Loci_init == 1)
+    {
+        read_loci_values(path);
+        //printf("Loci %d \n", Loci_init);
+    }
+    //read_manual_init(path);
+    //
+    if (Step_init == 1)
+    {
+        read_step_values(path);
+        read_scale_step_beta(path);
+        //printf("Step %d \n", Step_init);
+    }
+
+/*
+    for (int i=0; i<N_parm; i++)
+    {
+        printf("%lf ", init_loci[i]);
+    }
+    printf("\n");
+
+    for (int i=0; i<N_parm; i++)
+    {
+        printf("%lf ", init_step[i]);
+    }
+    printf("\n");
+    for (int i=0; i<N_beta; i++)
+    {
+        printf("%lf ", scale_step_beta[i]);
+    }
+    printf("\n");
+*/
     //
     return 0;
 }
